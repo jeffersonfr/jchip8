@@ -17,12 +17,9 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330x00, Boston, MA  02111-1307, USA.          *
  ***************************************************************************/
-#include "jgui/japplication.h"
-#include "jgui/jwindow.h"
-#include "jgui/jbufferedimage.h"
-
-#undef JDEBUG_ENABLED
-#include "jlogger/jloggerlib.h"
+#include "jcanvas/core/japplication.h"
+#include "jcanvas/core/jwindow.h"
+#include "jcanvas/core/jbufferedimage.h"
 
 #include <iostream>
 
@@ -47,16 +44,16 @@ unsigned char chip8_fontset[80] = {
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-class Chip8 : public jgui::Window {
+class Chip8 : public jcanvas::Window {
 
 	private:
-    static constexpr jgui::jsize_t<int>
+    static constexpr jcanvas::jpoint_t<int>
       _low_screen {64, 32},
       _high_screen {128, 64};
 
     uint8_t
       _memory[4096] {},
-      _video[_high_screen.width*_high_screen.height] {},
+      _video[_high_screen.x*_high_screen.y] {},
       _input[16] {},
       _key[16] {},
       _register[16] {};
@@ -75,7 +72,7 @@ class Chip8 : public jgui::Window {
 
 	public:
 		Chip8():
-			jgui::Window({720, 480})
+			jcanvas::Window({720, 480})
 		{
       for (int i=0; i<4096; i++) {
         _memory[i] = 0;
@@ -85,7 +82,7 @@ class Chip8 : public jgui::Window {
         _memory[i] = chip8_fontset[i];
       }
 
-      for (int i=0; i<_high_screen.width*_high_screen.height; i++) {
+      for (int i=0; i<_high_screen.x*_high_screen.y; i++) {
         _video[i] = 0;
       }
 
@@ -122,41 +119,41 @@ class Chip8 : public jgui::Window {
         case 0x0000: 
           switch (opcode & 0x000f) {
             case 0x0000: { // 00E0
-                JDEBUG(JINFO, "00E0: %04x\n", opcode);
+                printf("LOG:: 00E0: %04x\n", opcode);
 
-                const jgui::jsize_t<int>
+                const jcanvas::jpoint_t<int>
                   &screen = (_high_resolution == false)?_low_screen:_high_screen;
 
-                for (int j=0; j<screen.height; j++) {
-                  for (int i=0; i<screen.width; i++) {
-                    _video[j*screen.width + i] = 0;
+                for (int j=0; j<screen.y; j++) {
+                  for (int i=0; i<screen.x; i++) {
+                    _video[j*screen.x + i] = 0;
                   }
                 }
               }
               break;
             case 0x000e: // 00EE
-              JDEBUG(JINFO, "00EE: %04x\n", opcode);
+              printf("LOG:: 00EE: %04x\n", opcode);
               
               _program_counter = _stack[--_stack_pointer];
 
               break;
             default:
-              const jgui::jsize_t<int>
+              const jcanvas::jpoint_t<int>
                 &screen = (_high_resolution == false)?_low_screen:_high_screen;
 
               switch (opcode & 0x00f0) {
                 case 0x00b0: // 00BN (schip)
-                  for (int j=0; j<screen.height - n; j++) {
-                    for (int i=0; i<screen.width; i++) {
-                      _video[j*screen.width + i] = _video[(j + n)*screen.width + i];
+                  for (int j=0; j<screen.y - n; j++) {
+                    for (int i=0; i<screen.x; i++) {
+                      _video[j*screen.x + i] = _video[(j + n)*screen.x + i];
                     }
                   }
 
                   break;
                 case 0x00c0: // 00CN (schip)
-                  for (int j=0; j<screen.height - n; j++) {
-                    for (int i=0; i<screen.width; i++) {
-                      _video[(screen.height - j - 1)*screen.width + i] = _video[(screen.height - j - n - 1)*screen.width + i];
+                  for (int j=0; j<screen.y - n; j++) {
+                    for (int i=0; i<screen.x; i++) {
+                      _video[(screen.y - j - 1)*screen.x + i] = _video[(screen.y - j - n - 1)*screen.x + i];
                     }
                   }
 
@@ -167,23 +164,23 @@ class Chip8 : public jgui::Window {
                       // TODO::
                       break;
                     case 0x00fb: // 00FB (schip)
-                      for (int j=0; j<screen.height - n; j++) {
-                        for (int i=0; i<screen.width; i++) {
-                          _video[j*screen.width + screen.width - i - 1] = _video[j*screen.width + screen.width - i - n - 1];
+                      for (int j=0; j<screen.y - n; j++) {
+                        for (int i=0; i<screen.x; i++) {
+                          _video[j*screen.x + screen.x - i - 1] = _video[j*screen.x + screen.x - i - n - 1];
                         }
                       }
 
                       break;
                     case 0x00fc: // 00FC (schip)
-                      for (int j=0; j<screen.height - n; j++) {
-                        for (int i=0; i<screen.width; i++) {
-                          _video[j*screen.width + i] = _video[j*screen.width + i + n];
+                      for (int j=0; j<screen.y - n; j++) {
+                        for (int i=0; i<screen.x; i++) {
+                          _video[j*screen.x + i] = _video[j*screen.x + i + n];
                         }
                       }
 
                       break;
                     case 0x00fd: // 00FD (schip)
-                      jgui::Application::Quit();
+                      jcanvas::Application::Quit();
 
                       break;
                     case 0x00fe: // 00FE (schip)
@@ -199,20 +196,20 @@ class Chip8 : public jgui::Window {
           }
           break;
         case 0x1000: // 1NNN
-          JDEBUG(JINFO, "1NNN: %04x\n", opcode);
+          printf("LOG:: 1NNN: %04x\n", opcode);
 
           _program_counter = nnn;
 
           break;
         case 0x2000: // 2NNN
-          JDEBUG(JINFO, "2NNN: %04x\n", opcode);
+          printf("LOGIN:: 2NNN: %04x\n", opcode);
 
           _stack[_stack_pointer++] = _program_counter;
           _program_counter = nnn;
 
           break;
         case 0x3000: // 3XNN
-          JDEBUG(JINFO, "3XNN: %04x\n", opcode);
+          printf("LOG:: 3XNN: %04x\n", opcode);
 
           if (*vx == nn) {
             _program_counter += 2;
@@ -220,7 +217,7 @@ class Chip8 : public jgui::Window {
 
           break;
         case 0x4000: // 4XNN
-          JDEBUG(JINFO, "4XNN: %04x\n", opcode);
+          printf("LOG:: 4XNN: %04x\n", opcode);
 
           if (*vx != nn) {
             _program_counter += 2;
@@ -228,7 +225,7 @@ class Chip8 : public jgui::Window {
 
           break;
         case 0x5000: // 5XY0
-          JDEBUG(JINFO, "5XY0: %04x\n", opcode);
+          printf("LOG:: 5XY0: %04x\n", opcode);
 
           if (*vx == *vy) {
             _program_counter += 2;
@@ -236,13 +233,13 @@ class Chip8 : public jgui::Window {
 
           break;
         case 0x6000: // 6XNN
-          JDEBUG(JINFO, "6XNN: %04x\n", opcode);
+          printf("LOG:: 6XNN: %04x\n", opcode);
 
           *vx = nn;
 
           break;
         case 0x7000: // 7XNN
-          JDEBUG(JINFO, "7XNN: %04x\n", opcode);
+          printf("LOG:: 7XNN: %04x\n", opcode);
 
           *vx += nn;
 
@@ -250,31 +247,31 @@ class Chip8 : public jgui::Window {
         case 0x8000: 
           switch (opcode & 0x000f) {
             case 0x0000: // 8XY0
-              JDEBUG(JINFO, "8XY0: %04x\n", opcode);
+              printf("LOG:: 8XY0: %04x\n", opcode);
 
               *vx = *vy;
 
               break;
             case 0x0001: // 8XY1
-              JDEBUG(JINFO, "8XY1: %04x\n", opcode);
+              printf("LOG:: 8XY1: %04x\n", opcode);
 
               *vx |= *vy;
 
               break;
             case 0x0002: // 8XY2
-              JDEBUG(JINFO, "8XY2: %04x\n", opcode);
+              printf("LOG:: 8XY2: %04x\n", opcode);
 
               *vx &= *vy;
 
               break;
             case 0x0003: // 8XY3
-              JDEBUG(JINFO, "8XY3: %04x\n", opcode);
+              printf("LOG:: 8XY3: %04x\n", opcode);
 
               *vx ^= *vy;
 
               break;
             case 0x0004: // 8XY4
-              JDEBUG(JINFO, "8XY4: %04x\n", opcode);
+              printf("LOG:: 8XY4: %04x\n", opcode);
 
               _register[0x0f] = 0;
 
@@ -286,7 +283,7 @@ class Chip8 : public jgui::Window {
 
               break;
             case 0x0005: // 8XY5
-              JDEBUG(JINFO, "8XY5: %04x\n", opcode);
+              printf("LOG:: 8XY5: %04x\n", opcode);
 
               _register[0x0f] = 0;
 
@@ -298,14 +295,14 @@ class Chip8 : public jgui::Window {
 
               break;
             case 0x0006: // 8XY6
-              JDEBUG(JINFO, "8XY6: %04x\n", opcode);
+              printf("LOG:: 8XY6: %04x\n", opcode);
 
               _register[0x0f] = *vx & 0x01;
               *vx >>= 1;
 
               break;
             case 0x0007: // 8XY7
-              JDEBUG(JINFO, "8XY7: %04x\n", opcode);
+              printf("LOG:: 8XY7: %04x\n", opcode);
 
               _register[0x0f] = 0;
 
@@ -317,7 +314,7 @@ class Chip8 : public jgui::Window {
 
               break;
             case 0x000e: // 8XYE
-              JDEBUG(JINFO, "8XYE: %04x\n", opcode);
+              printf("LOG:: 8XYE: %04x\n", opcode);
 
               _register[0x0f] = *vx >> 7;
               *vx <<= 1;
@@ -326,7 +323,7 @@ class Chip8 : public jgui::Window {
           }
           break;
         case 0x9000: // 9XY0
-          JDEBUG(JINFO, "9XY0: %04x\n", opcode);
+          printf("LOG:: 9XY0: %04x\n", opcode);
 
           if (*vx != *vy) {
             _program_counter += 2;
@@ -334,27 +331,27 @@ class Chip8 : public jgui::Window {
 
           break;
         case 0xa000: // ANNN
-          JDEBUG(JINFO, "ANNN: %04x\n", opcode);
+          printf("LOG:: ANNN: %04x\n", opcode);
 
           _index = opcode & 0x0fff;
 
           break;
         case 0xb000: // BNNN
-          JDEBUG(JINFO, "BNNN: %04x\n", opcode);
+          printf("LOG:: BNNN: %04x\n", opcode);
 
           _program_counter = _register[0x00] + nnn;
 
           break;
         case 0xc000: // CXNN
-          JDEBUG(JINFO, "CXNN: %04x\n", opcode);
+          printf("LOG:: CXNN: %04x\n", opcode);
 
           *vx = (random() % 0xff) & nn;
           
           break;
         case 0xd000: { // DXYN
-            JDEBUG(JINFO, "DXYN: %04x\n", opcode);
+            printf("LOG:: DXYN: %04x\n", opcode);
 
-            const jgui::jsize_t<int>
+            const jcanvas::jpoint_t<int>
               &screen = (_high_resolution == false)?_low_screen:_high_screen;
 
             uint16_t
@@ -366,11 +363,11 @@ class Chip8 : public jgui::Window {
             for (int yline=0; yline<n; yline++) {
               for (int xline=0; xline<8; xline++) {
                 if ((_memory[_index + yline] & (0x80 >> xline)) != 0) {
-                  if (_video[(y0 + yline)*screen.width + x0 + xline] == 1) {
+                  if (_video[(y0 + yline)*screen.x + x0 + xline] == 1) {
                     _register[0x0f] = 1;
                   }
 
-                  _video[(y0 + yline)*screen.width + x0 + xline] ^= 1;
+                  _video[(y0 + yline)*screen.x + x0 + xline] ^= 1;
                 }
               }
             }
@@ -385,7 +382,7 @@ class Chip8 : public jgui::Window {
         case 0xe000: // key instructions
           switch (opcode & 0x00ff) {
             case 0x009e: // EX9E
-              JDEBUG(JINFO, "EX9E: %04x\n", opcode);
+              printf("LOG:: EX9E: %04x\n", opcode);
 
               if (_key[*vx] != 0) {
                 _program_counter += 2;
@@ -393,7 +390,7 @@ class Chip8 : public jgui::Window {
 
               break;
             case 0x00a1: // EXA1
-              JDEBUG(JINFO, "EXA1: %04x\n", opcode);
+              printf("LOG:: EXA1: %04x\n", opcode);
 
               if (_key[*vx] == 0) {
                 _program_counter += 2;
@@ -406,13 +403,13 @@ class Chip8 : public jgui::Window {
         case 0xf000: 
           switch (opcode & 0x00ff) {
             case 0x0007: // FX07
-              JDEBUG(JINFO, "FX07: %04x\n", opcode);
+              printf("LOG:: FX07: %04x\n", opcode);
 
               *vx = _delay_timer;
 
               break;
             case 0x000a: // FX0A // key instruction
-              JDEBUG(JINFO, "FX0A: %04x\n", opcode);
+              printf("LOG:: FX0A: %04x\n", opcode);
 
               {
                 bool keyPress = false;
@@ -434,19 +431,19 @@ class Chip8 : public jgui::Window {
 
               break;
             case 0x0015: // FX15
-              JDEBUG(JINFO, "FX15: %04x\n", opcode);
+              printf("LOG:: FX15: %04x\n", opcode);
 
               _delay_timer = *vx;
 
               break;
             case 0x0018: // FX18
-              JDEBUG(JINFO, "FX18: %04x\n", opcode);
+              printf("LOG:: FX18: %04x\n", opcode);
 
               _sound_timer = *vx;
 
               break;
             case 0x001e: // FX1E
-              JDEBUG(JINFO, "FX1E: %04x\n", opcode);
+              printf("LOG:: FX1E: %04x\n", opcode);
 
               _register[0x0f] = 0;
 
@@ -458,13 +455,13 @@ class Chip8 : public jgui::Window {
 
               break;
             case 0x0029: // FX29 // sprites
-              JDEBUG(JINFO, "FX29: %04x\n", opcode);
+              printf("LOG:: FX29: %04x\n", opcode);
 
               _index = *vx * 0x05;
 
               break;
             case 0x0033: // FX33
-              JDEBUG(JINFO, "FX33: %04x\n", opcode);
+              printf("LOG:: FX33: %04x\n", opcode);
 
               _memory[_index + 0] = (*vx % 1000) / 100;
               _memory[_index + 1] = (*vx % 100) / 10;
@@ -472,7 +469,7 @@ class Chip8 : public jgui::Window {
 
               break;
             case 0x0055: // FX55
-              JDEBUG(JINFO, "FX55: %04x\n", opcode);
+              printf("LOG:: FX55: %04x\n", opcode);
 
               for (int i=0; i<=x; i++) {
                 _memory[_index + i] = _register[i];
@@ -480,7 +477,7 @@ class Chip8 : public jgui::Window {
 
               break;
             case 0x0065: // FX65
-              JDEBUG(JINFO, "FX65: %04x\n", opcode);
+              printf("LOG:: FX65: %04x\n", opcode);
 
               for (int i=0; i<=x; i++) {
                 _register[i] = _memory[_index + i];
@@ -530,7 +527,7 @@ class Chip8 : public jgui::Window {
       while (file.read(&byte, 1)) {
         *ptr++ = byte & 0xff;
 
-        JDEBUG(JINFO, "%02x ", byte & 0xff);
+        printf("LOG:: %02x ", byte & 0xff);
       }
       
       std::cout << "\nloaded." << std::endl;
@@ -539,7 +536,7 @@ class Chip8 : public jgui::Window {
 
       std::thread(
           [&]() {
-          while (IsHidden() == false) {
+          while (IsVisible() == true) {
             Process(); // process cpu instructions
           }
       }).detach();
@@ -547,81 +544,81 @@ class Chip8 : public jgui::Window {
       return true;
     }
 
-		void Paint(jgui::Graphics *g) 
+		void Paint(jcanvas::Graphics *g) 
 		{
-      const jgui::jsize_t<int>
+      const jcanvas::jpoint_t<int>
         &screen = (_high_resolution == false)?_low_screen:_high_screen;
 
-      jgui::jsize_t<int>
+      jcanvas::jpoint_t<int>
         offset = (GetSize() - screen)/2;
 
-      jgui::BufferedImage
-        buffer(jgui::JPF_RGB32, screen);
+      jcanvas::BufferedImage
+        buffer(jcanvas::JPF_RGB32, screen);
 
-      for (int j=0; j<screen.height; j++) {
-        for (int i=0; i<screen.width; i++) {
-          buffer.GetGraphics()->SetRawRGB((_video[j*screen.width + i] == 0)?0xff000000:0xffffffff, {i, j});
+      for (int j=0; j<screen.y; j++) {
+        for (int i=0; i<screen.x; i++) {
+          buffer.GetGraphics()->SetRawRGB((_video[j*screen.x + i] == 0)?0xff000000:0xffffffff, {i, j});
         }
       }
 
-      g->SetBlittingFlags(jgui::JBF_NEAREST);
+      g->SetBlittingFlags(jcanvas::JBF_NEAREST);
       g->DrawImage(&buffer, {0, 0, GetSize()});
             
       char byte;
       write(_pipe[1], &byte, 1);
 		}
 
-    bool UpdateKey(jevent::jkeyevent_symbol_t key, int down)
+    bool UpdateKey(jcanvas::jkeyevent_symbol_t key, int down)
     {
-      if (key == jevent::JKS_ESCAPE) {
-        jgui::Application::Quit();
+      if (key == jcanvas::JKS_ESCAPE) {
+        jcanvas::Application::Quit();
 
-      } else if (key == jevent::JKS_1) {
+      } else if (key == jcanvas::JKS_1) {
         _key[0x01] = down;
-      } else if (key == jevent::JKS_2) {
+      } else if (key == jcanvas::JKS_2) {
         _key[0x08] = down;
-      } else if (key == jevent::JKS_3) {
+      } else if (key == jcanvas::JKS_3) {
         _key[0x03] = down;
-      } else if (key == jevent::JKS_4) {
+      } else if (key == jcanvas::JKS_4) {
         _key[0x0c] = down;
 
-      } else if (key == jevent::JKS_q) {
+      } else if (key == jcanvas::JKS_q) {
         _key[0x04] = down;
-      } else if (key == jevent::JKS_w) {
+      } else if (key == jcanvas::JKS_w) {
         _key[0x05] = down;
-      } else if (key == jevent::JKS_e) {
+      } else if (key == jcanvas::JKS_e) {
         _key[0x06] = down;
-      } else if (key == jevent::JKS_r) {
+      } else if (key == jcanvas::JKS_r) {
         _key[0x0d] = down;
 
-      } else if (key == jevent::JKS_a) {
+      } else if (key == jcanvas::JKS_a) {
         _key[0x07] = down;
-      } else if (key == jevent::JKS_s) {
+      } else if (key == jcanvas::JKS_s) {
         _key[0x02] = down;
-      } else if (key == jevent::JKS_d) {
+      } else if (key == jcanvas::JKS_d) {
         _key[0x0a] = down;
-      } else if (key == jevent::JKS_f) {
+      } else if (key == jcanvas::JKS_f) {
         _key[0x0e] = down;
 
-      } else if (key == jevent::JKS_z) {
+      } else if (key == jcanvas::JKS_z) {
         _key[0x0a] = down;
-      } else if (key == jevent::JKS_x) {
+      } else if (key == jcanvas::JKS_x) {
         _key[0x00] = down;
-      } else if (key == jevent::JKS_c) {
+      } else if (key == jcanvas::JKS_c) {
         _key[0x0b] = down;
-      } else if (key == jevent::JKS_v) {
+      } else if (key == jcanvas::JKS_v) {
         _key[0x0f] = down;
       }
 
       return true;
     }
 
-    virtual bool KeyPressed(jevent::KeyEvent *event)
+    virtual bool KeyPressed(jcanvas::KeyEvent *event)
     {
       return UpdateKey(event->GetSymbol(), 1);
     }
 
-    virtual bool KeyReleased(jevent::KeyEvent *event)
+    virtual bool KeyReleased(jcanvas::KeyEvent *event)
     {
       return UpdateKey(event->GetSymbol(), 0);
     }
@@ -629,7 +626,7 @@ class Chip8 : public jgui::Window {
 
 int main(int argc, char **argv)
 {
-	jgui::Application::Init(argc, argv);
+	jcanvas::Application::Init(argc, argv);
 
 	Chip8 app;
 
@@ -642,7 +639,7 @@ int main(int argc, char **argv)
 	app.SetTitle("Chip8");
   app.Exec();
 
-	jgui::Application::Loop();
+	jcanvas::Application::Loop();
 
 	return 0;
 }
