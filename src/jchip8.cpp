@@ -44,7 +44,7 @@ unsigned char chip8_fontset[80] = {
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-class Chip8 : public jcanvas::Window {
+class Chip8 : public jcanvas::Window, public jcanvas::KeyListener {
 
 	private:
     static constexpr jcanvas::jpoint_t<int>
@@ -553,7 +553,7 @@ class Chip8 : public jcanvas::Window {
         offset = (GetSize() - screen)/2;
 
       jcanvas::BufferedImage
-        buffer(jcanvas::JPF_RGB32, screen);
+        buffer(jcanvas::jpixelformat_t::RGB32, screen);
 
       for (int j=0; j<screen.y; j++) {
         for (int i=0; i<screen.x; i++) {
@@ -561,7 +561,7 @@ class Chip8 : public jcanvas::Window {
         }
       }
 
-      g->SetBlittingFlags(jcanvas::JBF_NEAREST);
+      g->SetBlittingFlags(jcanvas::jblitting_t::Nearest);
       g->DrawImage(&buffer, {0, 0, GetSize()});
             
       char byte;
@@ -570,43 +570,43 @@ class Chip8 : public jcanvas::Window {
 
     bool UpdateKey(jcanvas::jkeyevent_symbol_t key, int down)
     {
-      if (key == jcanvas::JKS_ESCAPE) {
+      if (key == jcanvas::jkeyevent_symbol_t::Escape) {
         jcanvas::Application::Quit();
 
-      } else if (key == jcanvas::JKS_1) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::Number1) {
         _key[0x01] = down;
-      } else if (key == jcanvas::JKS_2) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::Number2) {
         _key[0x08] = down;
-      } else if (key == jcanvas::JKS_3) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::Number3) {
         _key[0x03] = down;
-      } else if (key == jcanvas::JKS_4) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::Number4) {
         _key[0x0c] = down;
 
-      } else if (key == jcanvas::JKS_q) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::q) {
         _key[0x04] = down;
-      } else if (key == jcanvas::JKS_w) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::w) {
         _key[0x05] = down;
-      } else if (key == jcanvas::JKS_e) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::e) {
         _key[0x06] = down;
-      } else if (key == jcanvas::JKS_r) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::r) {
         _key[0x0d] = down;
 
-      } else if (key == jcanvas::JKS_a) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::a) {
         _key[0x07] = down;
-      } else if (key == jcanvas::JKS_s) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::s) {
         _key[0x02] = down;
-      } else if (key == jcanvas::JKS_d) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::d) {
         _key[0x0a] = down;
-      } else if (key == jcanvas::JKS_f) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::f) {
         _key[0x0e] = down;
 
-      } else if (key == jcanvas::JKS_z) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::z) {
         _key[0x0a] = down;
-      } else if (key == jcanvas::JKS_x) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::x) {
         _key[0x00] = down;
-      } else if (key == jcanvas::JKS_c) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::c) {
         _key[0x0b] = down;
-      } else if (key == jcanvas::JKS_v) {
+      } else if (key == jcanvas::jkeyevent_symbol_t::v) {
         _key[0x0f] = down;
       }
 
