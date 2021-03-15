@@ -552,19 +552,20 @@ class Chip8 : public jcanvas::Window, public jcanvas::KeyListener {
       jcanvas::jpoint_t<int>
         offset = (GetSize() - screen)/2;
 
-      jcanvas::BufferedImage
-        buffer(jcanvas::jpixelformat_t::RGB32, screen);
+      std::shared_ptr<jcanvas::Image> 
+        buffer = std::make_shared<jcanvas::BufferedImage>(jcanvas::jpixelformat_t::RGB32, screen);
 
       for (int j=0; j<screen.y; j++) {
         for (int i=0; i<screen.x; i++) {
-          buffer.GetGraphics()->SetRawRGB((_video[j*screen.x + i] == 0)?0xff000000:0xffffffff, {i, j});
+          buffer->GetGraphics()->SetRawRGB((_video[j*screen.x + i] == 0)?0xff000000:0xffffffff, {i, j});
         }
       }
 
       g->SetBlittingFlags(jcanvas::jblitting_t::Nearest);
-      g->DrawImage(&buffer, {0, 0, GetSize()});
+      g->DrawImage(buffer, {0, 0, GetSize()});
             
       char byte;
+      
       write(_pipe[1], &byte, 1);
 		}
 
