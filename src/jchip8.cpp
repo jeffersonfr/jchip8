@@ -561,7 +561,7 @@ class Chip8 : public jcanvas::Window, public jcanvas::KeyListener {
         }
       }
 
-      g->SetBlittingFlags(jcanvas::jblitting_t::Nearest);
+      g->SetBlittingFlags(jcanvas::jblitting_flags_t::Nearest);
       g->DrawImage(buffer, {0, 0, GetSize()});
             
       char byte;
