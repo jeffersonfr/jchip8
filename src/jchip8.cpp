@@ -44,6 +44,40 @@ unsigned char chip8_fontset[80] = {
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
+class Sync {
+
+  private:
+    int
+      _pipe[2];
+
+  public:
+    Sync()
+    {
+      pipe(_pipe);
+    }
+
+    ~Sync()
+    {
+      close(_pipe[0]);
+      close(_pipe[1]);
+    }
+
+    void wait()
+    {
+      char byte;
+
+      read(_pipe[0], &byte, 1);
+    }
+
+    void arrive()
+    {
+      char byte;
+      
+      write(_pipe[1], &byte, 1);
+    }
+
+};
+
 class Chip8 : public jcanvas::Window, public jcanvas::KeyListener {
 
 	private:
@@ -51,6 +85,8 @@ class Chip8 : public jcanvas::Window, public jcanvas::KeyListener {
       _low_screen {64, 32},
       _high_screen {128, 64};
 
+    Sync
+      _sync;
     uint8_t
       _memory[4096] {},
       _video[_high_screen.x*_high_screen.y] {},
@@ -65,8 +101,6 @@ class Chip8 : public jcanvas::Window, public jcanvas::KeyListener {
       _stack_pointer = 0,
       _delay_timer = 0,
       _sound_timer = 0;
-    int
-      _pipe[2];
     bool 
       _high_resolution = false;
 
@@ -93,8 +127,6 @@ class Chip8 : public jcanvas::Window, public jcanvas::KeyListener {
 
       _delay_timer = 0;
       _sound_timer = 0;
-
-      pipe(_pipe);
 		}
 
 		virtual ~Chip8()
@@ -374,8 +406,7 @@ class Chip8 : public jcanvas::Window, public jcanvas::KeyListener {
 
             Repaint();
 
-            char byte;
-            read(_pipe[0], &byte, 1);
+            _sync.wait();
           }
 
           break;
@@ -563,10 +594,8 @@ class Chip8 : public jcanvas::Window, public jcanvas::KeyListener {
 
       g->SetBlittingFlags(jcanvas::jblitting_flags_t::Nearest);
       g->DrawImage(buffer, {0, 0, GetSize()});
-            
-      char byte;
       
-      write(_pipe[1], &byte, 1);
+      _sync.arrive();
 		}
 
     bool UpdateKey(jcanvas::jkeyevent_symbol_t key, int down)
