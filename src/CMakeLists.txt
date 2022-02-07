@@ -1,15 +1,6 @@
 cmake_minimum_required (VERSION 3.0)
 
-pkg_check_modules(JCANVAS jcanvas)
-
-if (NOT JCANVAS_FOUND)
-  message (SEND_ERROR "unable to find jcanvas library")
-endif()
-
-include_directories(
-  ${CMAKE_SOURCE_DIR}/include
-  ${JCANVAS_INCLUDE_DIRS}
-)
+pkg_check_modules(jCanvas REQUIRED IMPORTED_TARGET jcanvas)
 
 macro(app)
   add_executable(${ARGV0}
@@ -17,7 +8,9 @@ macro(app)
   )
 
   target_link_libraries(${ARGV0}
-    ${JCANVAS_LIBRARIES}
+    PRIVATE
+      PkgConfig::jCanvas
+      Threads::Threads
   )
 endmacro()
 

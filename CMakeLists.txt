@@ -5,5 +5,6 @@ project (jchip8)
 set(CMAKE_CXX_STANDARD 20)
 
 find_package(PkgConfig REQUIRED)
+find_package(Threads REQUIRED)
 
 add_subdirectory(src)
